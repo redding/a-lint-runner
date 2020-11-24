@@ -15,7 +15,7 @@ This assumes a `BIN_NAME` of `runlints` (see the Installation section below).
 
 ```
 $ runlints -h
-Usage: runlints [options] [TESTS]
+Usage: runlints [options] [FILES]
 
 Options:
     -c, --[no-]changed-only          only lint source files with changes
@@ -60,7 +60,7 @@ LINTERS =
 ```
 $ runlints -d
 [DEBUG] CLI init and parse...          (6.686 ms)
-[DEBUG] 3 Source files:
+[DEBUG] 3 source files:
 [DEBUG]   app/file1.rb
 [DEBUG]   app/file2.js
 [DEBUG]   app/file3.scss
@@ -74,8 +74,8 @@ This option, in addition to executing the linter command, outputs a bunch of det
 
 ```
 $ runlints -d -c
-[DEBUG] CLI init and parse...          (7.138 ms)
-[DEBUG] Lookup changed test files...   (24.889 ms)
+[DEBUG] CLI init and parse...            (7.138 ms)
+[DEBUG] Lookup changed source files...   (24.889 ms)
 [DEBUG]   `git diff --no-ext-diff --name-only  -- . && git ls-files --others --exclude-standard -- .`
 [DEBUG] 1 Source files:
 [DEBUG]   app/file1.rb
@@ -83,14 +83,14 @@ $ runlints -d -c
 [DEBUG]   rubocop app/file1.rb
 ```
 
-This runs a git command to determine which files have been updated (relative to `HEAD` by default) and only runs those tests.
+This runs a git command to determine which files have been updated (relative to `HEAD` by default) and only run the linters on those files.
 
 You can specify a custom git ref to use instead:
 
 ```
 $ runlints -d -c -r master
-[DEBUG] CLI init and parse...          (6.933 ms)
-[DEBUG] Lookup changed test files...   (162.297 ms)
+[DEBUG] CLI init and parse...            (6.933 ms)
+[DEBUG] Lookup changed source files...   (162.297 ms)
 [DEBUG]   `git diff --no-ext-diff --name-only master -- . && git ls-files --others --exclude-standard -- .`
 [DEBUG] 2 Source files:
 [DEBUG]   app/file2.js
@@ -136,7 +136,7 @@ This option, similar to `--dry-run`, does not execute any linter command. It lis
 module ALintRunner
   VERSION = "x.x.x"
 
-  # update these as needed for your test setup
+  # update these as needed for your lint setup
   BIN_NAME = "runlints" # should match what you name the executable
   LINTERS =
     [
@@ -164,7 +164,7 @@ module ALintRunner
 
 ```
 $ runlints -h
-Usage: runlints [options] [TESTS]
+Usage: runlints [options] [FILES]
 
 Options:
     -c, --[no-]changed-only          only lint source files with changes
