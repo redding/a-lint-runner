@@ -173,9 +173,11 @@ module ALintRunner
       @extensions = extensions
     end
 
-    def cmd_str(source_files)
+    def cmd_str(specified_source_files)
+      return "#{executable} ." if specified_source_files.nil?
+
       applicable_source_files =
-        source_files.select { |source_file|
+        specified_source_files.select { |source_file|
           @extensions.include?(File.extname(source_file))
         }
       return if applicable_source_files.none?
@@ -195,11 +197,7 @@ module ALintRunner
     end
 
     def execute?
-      any_source_files? && any_linters? && !dry_run? && !list?
-    end
-
-    def any_source_files?
-      source_files.any?
+      any_linters? && !dry_run? && !list?
     end
 
     def any_linters?
@@ -226,35 +224,42 @@ module ALintRunner
       config.linters
     end
 
-    def source_files
-      @source_files ||=
-        (found_source_files & config.source_whitelist) - config.source_blacklist
+    def specified_source_files
+      @specified_source_files ||=
+        if file_paths.any? || changed_only?
+          (found_source_files & config.source_whitelist) - config.source_blacklist
+        else
+          nil
+        end
     end
 
     def cmds
-      @cmds ||= linters.map { |linter| linter.cmd_str(source_files) }.compact
+      @cmds ||=
+        linters.map { |linter| linter.cmd_str(specified_source_files) }.compact
     end
 
     def run
+      output_source_files = specified_source_files.to_a
       if debug?
-        debug_puts "#{source_files.size} source files:"
-        source_files.each do |source_file|
+        debug_puts "#{output_source_files.size} specified source files:"
+        output_source_files.each do |source_file|
           debug_puts "  #{source_file}"
         end
       end
 
       if list?
-        puts source_files.join("\n")
+        puts output_source_files.join("\n")
       else
         linters.each_with_index do |linter, index|
           puts "\n\n" if index > 0
           puts "Running #{linter.name}"
 
-          if (cmd = linter.cmd_str(source_files))
-            debug_puts "  #{cmd}" if debug?
-            system(cmd) if execute?
-            puts cmd if dry_run?
-          end
+          cmd = linter.cmd_str(specified_source_files)
+          next unless cmd
+
+          debug_puts "  #{cmd}" if debug?
+          puts cmd if dry_run?
+          system(cmd) if execute?
         end
       end
     end

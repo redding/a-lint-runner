@@ -40,14 +40,13 @@ class ALintRunner::Runner
       assert_that(subject.file_paths).equals(@file_paths)
       assert_that(subject.config).is_the_same_as(@config)
       assert_that(subject.execute?).is_true
-      assert_that(subject.any_source_files?).is_true
       assert_that(subject.any_linters?).is_true
       assert_that(subject.dry_run?).is_false
       assert_that(subject.list?).is_false
       assert_that(subject.debug?).is_false
       assert_that(subject.changed_only?).is_false
       assert_that(subject.linters).equals(@config.linters)
-      assert_that(subject.source_files).equals(
+      assert_that(subject.specified_source_files).equals(
         [
           "app",
           *@whitelisted_source_files,
@@ -56,14 +55,16 @@ class ALintRunner::Runner
       )
 
       assert_that(subject.cmds).equals(
-        subject.linters.map { |linter| linter.cmd_str(subject.source_files) }
+        subject.linters.map { |linter|
+          linter.cmd_str(subject.specified_source_files)
+        }
       )
     end
 
     should "know its source files given blacklisted files" do
       MuchStub.(@config, :ignored_files) { ["factory.rb"] }
 
-      assert_that(subject.source_files).equals(
+      assert_that(subject.specified_source_files).equals(
         [
           "app",
           *@whitelisted_source_files,
@@ -104,7 +105,7 @@ class ALintRunner::Runner
       assert_that(subject.list?).is_true
 
       subject.run
-      assert_that(@lint_output).includes(subject.source_files.join("\n"))
+      assert_that(@lint_output).includes(subject.specified_source_files.join("\n"))
     end
   end
 
@@ -134,7 +135,7 @@ class ALintRunner::Runner
 
     should "only run the source files that have changed" do
       assert_that(subject.changed_only?).is_true
-      assert_that(subject.source_files).equals([@changed_source_file])
+      assert_that(subject.specified_source_files).equals([@changed_source_file])
 
       assert_that(@git_cmd_used).equals(
         "git diff --no-ext-diff --name-only #{@changed_ref} "\
@@ -165,7 +166,7 @@ class ALintRunner::Runner
       assert_that(@lint_output).includes("[DEBUG] Lookup changed source files...")
       assert_that(@lint_output).includes(
         "[DEBUG]   `#{changed_cmd}`\n"\
-        "[DEBUG] #{changed_files_count} source files:\n"\
+        "[DEBUG] #{changed_files_count} specified source files:\n"\
         "#{changed_files_lines.join("\n")}\n"\
       )
     end

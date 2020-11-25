@@ -66,20 +66,17 @@ LINTERS =
 ```
 $ runlints -d
 [DEBUG] CLI init and parse...          (6.686 ms)
-[DEBUG] 3 source files:
-[DEBUG]   app/file1.rb
-[DEBUG]   app/file2.js
-[DEBUG]   app/file3.scss
+[DEBUG] 0 specified source files:
 Running Rubocop
-[DEBUG]   rubocop app/file1.rb
+[DEBUG]   rubocop .
 
 
 Running ES Lint
-[DEBUG]   ./node_modules/.bin/eslint app/file2.js
+[DEBUG]   ./node_modules/.bin/eslint .
 
 
 Running SCSS Lint
-[DEBUG]   scss-lint app/file3.scss
+[DEBUG]   scss-lint .
 ```
 
 This option, in addition to executing the linter command, outputs a bunch of detailed debug information.
@@ -91,7 +88,7 @@ $ runlints -d -c
 [DEBUG] CLI init and parse...            (7.138 ms)
 [DEBUG] Lookup changed source files...   (24.889 ms)
 [DEBUG]   `git diff --no-ext-diff --name-only  -- . && git ls-files --others --exclude-standard -- .`
-[DEBUG] 1 Source files:
+[DEBUG] 1 specified source files:
 [DEBUG]   app/file1.rb
 Running Rubocop
 [DEBUG]   rubocop app/file1.rb
@@ -112,7 +109,7 @@ $ runlints -d -c -r master
 [DEBUG] CLI init and parse...            (6.933 ms)
 [DEBUG] Lookup changed source files...   (162.297 ms)
 [DEBUG]   `git diff --no-ext-diff --name-only master -- . && git ls-files --others --exclude-standard -- .`
-[DEBUG] 2 Source files:
+[DEBUG] 2 specified source files:
 [DEBUG]   app/file2.js
 [DEBUG]   app/file3.scss
 
@@ -130,15 +127,15 @@ Running SCSS Lint
 ```
 $ runlints --dry-run
 Running Rubocop
-rubocop app/file1.rb
+rubocop .
 
 
 Running ES Lint
-./node_modules/.bin/eslint app/file2.js
+./node_modules/.bin/eslint .
 
 
 Running SCSS Lint
-scss-lint app/file3.scss
+scss-lint .
 ```
 
 This option only outputs the linter command it would have run. It does not execute the linter command.
