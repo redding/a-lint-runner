@@ -70,8 +70,16 @@ $ runlints -d
 [DEBUG]   app/file1.rb
 [DEBUG]   app/file2.js
 [DEBUG]   app/file3.scss
-[DEBUG] Linter command:
-[DEBUG]   rubocop app/file1.rb; ./node_modules/.bin/eslint app/file2.js; scss-lint app/file3.scss
+Running Rubocop
+[DEBUG]   rubocop app/file1.rb
+
+
+Running ES Lint
+[DEBUG]   ./node_modules/.bin/eslint app/file2.js
+
+
+Running SCSS Lint
+[DEBUG]   scss-lint app/file3.scss
 ```
 
 This option, in addition to executing the linter command, outputs a bunch of detailed debug information.
@@ -85,8 +93,14 @@ $ runlints -d -c
 [DEBUG]   `git diff --no-ext-diff --name-only  -- . && git ls-files --others --exclude-standard -- .`
 [DEBUG] 1 Source files:
 [DEBUG]   app/file1.rb
-[DEBUG] Linter command:
+Running Rubocop
 [DEBUG]   rubocop app/file1.rb
+
+
+Running ES Lint
+
+
+Running SCSS Lint
 ```
 
 This runs a git command to determine which files have been updated (relative to `HEAD` by default) and only run the linters on those files.
@@ -101,15 +115,30 @@ $ runlints -d -c -r master
 [DEBUG] 2 Source files:
 [DEBUG]   app/file2.js
 [DEBUG]   app/file3.scss
-[DEBUG] Linter command:
-[DEBUG]   ./node_modules/.bin/eslint app/file2.js; scss-lint app/file3.scss
+
+
+Running ES Lint
+[DEBUG]   ./node_modules/.bin/eslint app/file2.js
+
+
+Running SCSS Lint
+[DEBUG]   scss-lint app/file3.scss
 ```
 
 #### Dry-Run
 
 ```
 $ runlints --dry-run
-rubocop app/file1.rb; ./node_modules/.bin/eslint app/file2.js; scss-lint app/file3.scss
+Running Rubocop
+rubocop app/file1.rb
+
+
+Running ES Lint
+./node_modules/.bin/eslint app/file2.js
+
+
+Running SCSS Lint
+scss-lint app/file3.scss
 ```
 
 This option only outputs the linter command it would have run. It does not execute the linter command.

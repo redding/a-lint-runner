@@ -55,10 +55,8 @@ class ALintRunner::Runner
         ]
       )
 
-      assert_that(subject.cmd_str).equals(
-        subject.linters
-          .map { |linter| linter.cmd_str(subject.source_files) }
-          .join(@unit_class::LINTER_CMD_SEPARATOR)
+      assert_that(subject.cmds).equals(
+        subject.linters.map { |linter| linter.cmd_str(subject.source_files) }
       )
     end
 
@@ -87,7 +85,9 @@ class ALintRunner::Runner
       assert_that(subject.dry_run?).is_true
 
       subject.run
-      assert_that(@lint_output).includes(subject.cmd_str)
+      subject.cmds.each do |cmd|
+        assert_that(@lint_output).includes(cmd)
+      end
     end
   end
 
@@ -167,8 +167,6 @@ class ALintRunner::Runner
         "[DEBUG]   `#{changed_cmd}`\n"\
         "[DEBUG] #{changed_files_count} source files:\n"\
         "#{changed_files_lines.join("\n")}\n"\
-        "[DEBUG] Lint command:\n"\
-        "[DEBUG]   #{subject.cmd_str}\n"
       )
     end
   end

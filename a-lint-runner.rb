@@ -186,7 +186,6 @@ module ALintRunner
 
   class Runner
     DEFAULT_FILE_PATH = "."
-    LINTER_CMD_SEPARATOR = "; "
 
     attr_reader :file_paths, :config
 
@@ -232,12 +231,8 @@ module ALintRunner
         (found_source_files & config.source_whitelist) - config.source_blacklist
     end
 
-    def cmd_str
-      @cmd_str ||=
-        linters
-          .map { |linter| linter.cmd_str(source_files) }
-          .compact
-          .join(LINTER_CMD_SEPARATOR)
+    def cmds
+      @cmds ||= linters.map { |linter| linter.cmd_str(source_files) }.compact
     end
 
     def run
@@ -248,16 +243,19 @@ module ALintRunner
         end
       end
 
-      if debug? && any_source_files?
-        debug_puts "Lint command:"
-        debug_puts "  #{cmd_str}"
-      end
-
-      if execute?
-        system(cmd_str)
+      if list?
+        puts source_files.join("\n")
       else
-        puts source_files.join("\n") if list?
-        puts cmd_str                 if dry_run?
+        linters.each_with_index do |linter, index|
+          puts "\n\n" if index > 0
+          puts "Running #{linter.name}"
+
+          if (cmd = linter.cmd_str(source_files))
+            debug_puts "  #{cmd}" if debug?
+            system(cmd) if execute?
+            puts cmd if dry_run?
+          end
+        end
       end
     end
 
