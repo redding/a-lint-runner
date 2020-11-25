@@ -20,7 +20,7 @@ Usage: runlints [options] [FILES]
 Options:
     -c, --[no-]changed-only          only lint source files with changes
     -r, --changed-ref VALUE          reference for changes, use with `-c` opt
-        --[no-]dry-run               output the linter command to $stdout
+        --[no-]dry-run               output each linter command to $stdout without executing
     -l, --[no-]list                  list source files on $stdout
     -d, --[no-]debug                 run in debug mode
         --version
@@ -39,7 +39,7 @@ LINTERS =
   [
     {
       name: "Rubocop",
-      executable: "rubocop"
+      executable: "rubocop",
       extensions: ["rb"]
     },
     {
@@ -169,7 +169,7 @@ Usage: runlints [options] [FILES]
 Options:
     -c, --[no-]changed-only          only lint source files with changes
     -r, --changed-ref VALUE          reference for changes, use with `-c` opt
-        --[no-]dry-run               output the linter command to $stdout
+        --[no-]dry-run               output each linter command to $stdout without executing
     -l, --[no-]list                  list source files on $stdout
     -d, --[no-]debug                 run in debug mode
         --version
