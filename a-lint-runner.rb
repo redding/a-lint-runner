@@ -9,6 +9,12 @@ module ALintRunner
 
   # update these as needed for your lint setup
   BIN_NAME = "a-lint-runner"
+  SOURCE_FILES = [
+    "app", "config", "db", "lib", "script", "test"
+  ]
+  IGNORED_FILES = [
+    "test/fixtures"
+  ]
   LINTERS =
     [
       {
@@ -40,15 +46,36 @@ module ALintRunner
       end
     end
 
-    attr_reader :stdout, :bin_name, :version
+    attr_reader :stdout, :version
+    attr_reader :bin_name, :source_files, :ignored_files
 
     settings :changed_only, :changed_ref, :dry_run, :list, :debug
+
+    def self.file_path_source_files(file_path)
+      pwd = Dir.pwd
+      path = File.expand_path(file_path, pwd)
+
+      (Dir.glob("#{path}*") + Dir.glob("#{path}*/**/*"))
+        .map{ |p| p.gsub("#{pwd}/", "") }
+    end
+
+    def self.root_source_files
+      pwd = Dir.pwd
+
+      Dir.glob("#{pwd}/*")
+        .select{ |p| File.file?(p) }
+        .map{ |p| p.gsub("#{pwd}/", "") }
+    end
+
+    Dir.glob(Dir.pwd + "/*")
 
     def initialize(stdout = nil)
       @stdout = stdout || $stdout
 
-      @bin_name      = BIN_NAME
       @version       = VERSION
+      @bin_name      = BIN_NAME
+      @source_files  = SOURCE_FILES
+      @ignored_files = IGNORED_FILES
       @linter_hashes = LINTERS
 
       # cli option settings
@@ -57,6 +84,24 @@ module ALintRunner
       @dry_run      = false
       @list         = false
       @debug        = false
+    end
+
+    def source_whitelist
+      @source_whitelist ||=
+        source_files
+          .reduce(Set.new(self.class.root_source_files)) { |acc, path|
+            acc + self.class.file_path_source_files(path)
+          }
+          .sort
+    end
+
+    def source_blacklist
+      @source_blacklist ||=
+        ignored_files
+          .reduce(Set.new) { |acc, path|
+            acc + self.class.file_path_source_files(path)
+          }
+          .sort
     end
 
     def linters
@@ -103,6 +148,17 @@ module ALintRunner
 
     def bench_finish_msg(time_in_ms)
       " (#{time_in_ms} ms)"
+    end
+
+    private
+
+    def source_root_files
+      @source_whitelist ||=
+        source_files
+          .reduce(Set.new) { |acc, path|
+            acc + self.class.file_path_source_files(path)
+          }
+          .sort
     end
   end
 
@@ -173,7 +229,7 @@ module ALintRunner
 
     def source_files
       @source_files ||=
-        lookup_source_files(file_paths.empty? ? [DEFAULT_FILE_PATH] : file_paths)
+        (found_source_files & config.source_whitelist) - config.source_blacklist
     end
 
     def cmd_str
@@ -207,13 +263,14 @@ module ALintRunner
 
     private
 
-    def lookup_source_files(file_paths)
+    def found_source_files
+      source_file_paths = file_paths.empty? ? [DEFAULT_FILE_PATH] : file_paths
       files = nil
 
       if changed_only?
         result = nil
         ALintRunner.bench("Lookup changed source files") do
-          result = changed_source_files(file_paths)
+          result = changed_source_files(source_file_paths)
         end
         files = result.files
         if debug?
@@ -221,29 +278,24 @@ module ALintRunner
         end
       else
         ALintRunner.bench("Lookup source files") do
-          files = globbed_source_files(file_paths)
+          files = globbed_source_files(source_file_paths)
         end
       end
 
       files
     end
 
-    def changed_source_files(file_paths)
-      result = GitChangedFiles.new(config, file_paths)
+    def changed_source_files(source_file_paths)
+      result = GitChangedFiles.new(config, source_file_paths)
       ChangedResult.new(result.cmd, globbed_source_files(result.files))
     end
 
-    def globbed_source_files(file_paths)
-      file_paths
-        .reduce(Set.new) { |acc, path|  acc + file_path_source_files(path) }
+    def globbed_source_files(source_file_paths)
+      source_file_paths
+        .reduce(Set.new) { |acc, source_file_path|
+          acc + Config.file_path_source_files(source_file_path)
+        }
         .sort
-    end
-
-    def file_path_source_files(file_path)
-      pwd = Dir.pwd
-      path = File.expand_path(file_path, pwd)
-      (Dir.glob("#{path}*") + Dir.glob("#{path}*/**/*"))
-        .map{ |p| p.gsub("#{pwd}/", "") }
     end
 
     def puts(*args)

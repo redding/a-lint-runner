@@ -15,7 +15,7 @@ class ALintRunner::Runner
     desc "when init"
     setup do
       Assert.stub(Dir, :pwd){ TEST_SUPPORT_PATH }
-      @source_files = [
+      @whitelisted_source_files = [
         "app/file1.rb",
         "app/file2.js",
         "app/file3.scss"
@@ -47,12 +47,29 @@ class ALintRunner::Runner
       assert_that(subject.debug?).is_false
       assert_that(subject.changed_only?).is_false
       assert_that(subject.linters).equals(@config.linters)
-      assert_that(subject.source_files).is_not_empty
+      assert_that(subject.source_files).equals(
+        [
+          "app",
+          *@whitelisted_source_files,
+          "factory.rb"
+        ]
+      )
 
       assert_that(subject.cmd_str).equals(
         subject.linters
           .map { |linter| linter.cmd_str(subject.source_files) }
           .join(@unit_class::LINTER_CMD_SEPARATOR)
+      )
+    end
+
+    should "know its source files given blacklisted files" do
+      MuchStub.(@config, :ignored_files) { ["factory.rb"] }
+
+      assert_that(subject.source_files).equals(
+        [
+          "app",
+          *@whitelisted_source_files,
+        ]
       )
     end
   end
@@ -98,14 +115,14 @@ class ALintRunner::Runner
       Assert.stub(@config, :changed_only){ true }
       Assert.stub(@config, :dry_run){ true }
 
-      @changed_source_file = @source_files.sample
+      @changed_source_file = @whitelisted_source_files.sample
       @git_cmd_used = nil
       Assert.stub(ALintRunner::GitChangedFiles, :new) do |*args|
         @git_cmd_used = ALintRunner::GitChangedFiles.cmd(*args)
         ALintRunner::ChangedResult.new(@git_cmd_used, [@changed_source_file])
       end
 
-      @file_paths = @source_files
+      @file_paths = @whitelisted_source_files
     end
   end
 

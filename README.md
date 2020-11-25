@@ -35,22 +35,28 @@ Given these CONSTANT values:
 
 ```ruby
 BIN_NAME = "runlints"
+SOURCE_FILES = [
+  "app", "config", "db", "lib", "script", "test"
+]
+IGNORED_FILES = [
+  "test/fixtures"
+]
 LINTERS =
   [
     {
       name: "Rubocop",
       executable: "rubocop",
-      extensions: ["rb"]
+      extensions: [".rb"]
     },
     {
       name: "ES Lint",
       executable: "./node_modules/.bin/eslint",
-      extensions: ["js"]
+      extensions: [".js"]
     },
     {
       name: "SCSS Lint",
       executable: "scss-lint",
-      extensions: ["scss"]
+      extensions: [".scss"]
     }
   ]
 ```
@@ -143,17 +149,17 @@ module ALintRunner
       {
         name: "Rubocop",
         executable: "rubocop"
-        extensions: ["rb"]
+        extensions: [".rb"]
       },
       {
         name: "ES Lint",
         executable: "./node_modules/.bin/eslint",
-        extensions: ["js"]
+        extensions: [".js"]
       },
       {
         name: "SCSS Lint",
         executable: "scss-lint",
-        extensions: ["scss"]
+        extensions: [".scss"]
       }
     ]
 

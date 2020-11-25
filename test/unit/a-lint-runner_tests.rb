@@ -14,6 +14,16 @@ module ALintRunner
 
     should "know its default CONTANTS" do
       assert_that(subject::BIN_NAME).equals("a-lint-runner")
+      assert_that(subject::SOURCE_FILES).equals(
+        [
+          "app", "config", "db", "lib", "script", "test"
+        ]
+      )
+      assert_that(subject::IGNORED_FILES).equals(
+        [
+          "test/fixtures"
+        ]
+      )
       assert_that(subject::LINTERS).equals(
         [
           {
