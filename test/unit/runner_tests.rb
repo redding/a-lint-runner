@@ -55,10 +55,35 @@ class ALintRunner::Runner
       )
 
       assert_that(subject.cmds).equals(
-        subject.linters.map { |linter|
-          linter.cmd_str(subject.specified_source_files)
+        subject.linters.reduce({}) { |acc, linter|
+          acc[linter.cli_option_name] =
+            linter.cmd_str(subject.specified_source_files)
+          acc
         }
       )
+    end
+
+    should "know its enabled linters" do
+      assert_that(subject.any_specifically_enabled_linters?).is_false
+      assert_that(subject.specifically_enabled_linters).equals([])
+      assert_that(subject.enabled_linters).equals(subject.linters)
+    end
+
+    should "know its enabled linters given specifically enabled linters" do
+      @config.linters.first.specifically_enabled = true
+
+      assert_that(subject.any_specifically_enabled_linters?).is_true
+      assert_that(subject.specifically_enabled_linters).equals(
+        [ @config.linters.first])
+      assert_that(subject.enabled_linters).equals(subject.linters)
+    end
+
+    should "know its enabled linters given specifically disabled linters" do
+      @config.linters.first.specifically_enabled = false
+
+      assert_that(subject.any_specifically_enabled_linters?).is_false
+      assert_that(subject.specifically_enabled_linters).equals([])
+      assert_that(subject.enabled_linters).equals(subject.linters[1..-1])
     end
 
     should "know its source files given blacklisted files" do
@@ -86,8 +111,46 @@ class ALintRunner::Runner
       assert_that(subject.dry_run?).is_true
 
       subject.run
-      subject.cmds.each do |cmd|
+      subject.cmds.values.each do |cmd|
         assert_that(@lint_output).includes(cmd)
+      end
+    end
+  end
+
+  class SpecificLintersEnabledTests < InitSetupTests
+    desc "and configured with specific linters enabled"
+    setup do
+      Assert.stub(@config, :dry_run){ true }
+      @config.linters.first.specifically_enabled = true
+
+      @runner = @unit_class.new(@file_paths, config: @config)
+    end
+
+    should "run only the specifically enabled linters" do
+      subject.run
+
+      linter_names = subject.specifically_enabled_linters.map(&:cli_option_name)
+      linter_names.each do |name|
+        assert_that(@lint_output).includes(subject.cmds[name])
+      end
+    end
+  end
+
+  class SpecificLintersDisabledTests < InitSetupTests
+    desc "and configured with specific linters disabled"
+    setup do
+      Assert.stub(@config, :dry_run){ true }
+      @config.linters.first.specifically_enabled = false
+
+      @runner = @unit_class.new(@file_paths, config: @config)
+    end
+
+    should "run only the specifically enabled linters" do
+      subject.run
+
+      linter_names = subject.enabled_linters.map(&:cli_option_name)
+      linter_names.each do |name|
+        assert_that(@lint_output).includes(subject.cmds[name])
       end
     end
   end

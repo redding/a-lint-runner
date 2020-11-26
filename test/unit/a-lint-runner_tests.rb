@@ -29,7 +29,8 @@ module ALintRunner
           {
             name: "Rubocop",
             executable: "rubocop",
-            extensions: [".rb"]
+            extensions: [".rb"],
+            cli_abbrev: "u"
           },
           {
             name: "ES Lint",

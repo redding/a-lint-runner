@@ -18,7 +18,10 @@ $ runlints -h
 Usage: runlints [options] [FILES]
 
 Options:
-    -c, --[no-]changed-only          only lint source files with changes
+    -u, --[no-]rubocop               specifically run or don't run Rubocop
+    -e, --[no-]es-lint               specifically run or don't run ES Lint
+    -s, --[no-]scss-lint             specifically run or don't run SCSS Lint
+    -c, --[no-]changed-only          only run source files with changes
     -r, --changed-ref VALUE          reference for changes, use with `-c` opt
         --[no-]dry-run               output each linter command to $stdout without executing
     -l, --[no-]list                  list source files on $stdout
@@ -140,6 +143,26 @@ scss-lint .
 
 This option only outputs the linter command it would have run. It does not execute the linter command.
 
+#### Specifically run or don't run individual linters
+
+```
+$ runlints --rubocop
+Running Rubocop
+rubocop .
+```
+
+```
+$ runlints --no-es-lint
+Running Rubocop
+rubocop .
+
+
+Running SCSS Lint
+scss-lint .
+```
+
+Each linter gets a CLI option that allows you to toggle it on/off. If no options are given, all linters are run.
+
 #### List
 
 ```
@@ -176,6 +199,7 @@ module ALintRunner
         name: "Rubocop",
         executable: "rubocop"
         extensions: [".rb"]
+        cli_abbrev: "u"
       },
       {
         name: "ES Lint",
@@ -199,7 +223,10 @@ $ runlints -h
 Usage: runlints [options] [FILES]
 
 Options:
-    -c, --[no-]changed-only          only lint source files with changes
+    -u, --[no-]rubocop               specifically run or don't run Rubocop
+    -e, --[no-]es-lint               specifically run or don't run ES Lint
+    -s, --[no-]scss-lint             specifically run or don't run SCSS Lint
+    -c, --[no-]changed-only          only run source files with changes
     -r, --changed-ref VALUE          reference for changes, use with `-c` opt
         --[no-]dry-run               output each linter command to $stdout without executing
     -l, --[no-]list                  list source files on $stdout

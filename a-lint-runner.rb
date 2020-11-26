@@ -20,7 +20,8 @@ module ALintRunner
       {
         name: "Rubocop",
         executable: "rubocop",
-        extensions: [".rb"]
+        extensions: [".rb"],
+        cli_abbrev: "u"
       },
       {
         name: "ES Lint",
@@ -112,6 +113,8 @@ module ALintRunner
       settings.keys.each do |name|
         if !settings[name].nil? && self.respond_to?(name.to_s)
           self.send(name.to_s, settings[name])
+        elsif (linter = linters.detect { |l| l.cli_option_name == name })
+          linter.specifically_enabled = settings[name]
         end
       end
     end
@@ -165,12 +168,39 @@ module ALintRunner
   class Linter
     ARGUMENT_SEPARATOR = " "
 
-    attr_reader :name, :executable, :extensions
+    attr_reader :name, :executable, :extensions, :cli_option_name, :cli_abbrev
 
-    def initialize(name:, executable:, extensions:)
+    def initialize(
+          name:,
+          executable:,
+          extensions:,
+          cli_option_name: nil,
+          cli_abbrev: nil)
       @name = name
       @executable = executable
       @extensions = extensions
+      @cli_option_name = cli_option_name || name.downcase.gsub(/\W+/, "_")
+      @cli_abbrev = cli_abbrev || name[0].downcase
+
+      @specifically_enabled = nil
+      @enabled = true
+    end
+
+    # This is set by CLI flags:
+    # * `true`: enabled by flag, e.g. `--rubocop`
+    # * `false`: disabled by flag, e.g. `--no-rubocop`
+    # * `nil`: default when no is flag specified
+    def specifically_enabled=(value)
+      @enabled = false if value == false
+      @specifically_enabled = value
+    end
+
+    def specifically_enabled?
+      !!@specifically_enabled
+    end
+
+    def enabled?
+      !!@enabled
     end
 
     def cmd_str(specified_source_files)
@@ -220,8 +250,21 @@ module ALintRunner
       !!config.changed_only
     end
 
+    def any_specifically_enabled_linters?
+      specifically_enabled_linters.any?
+    end
+
     def linters
       config.linters
+    end
+
+    def specifically_enabled_linters
+      @specifically_enabled_linters ||=
+        config.linters.select(&:specifically_enabled?)
+    end
+
+    def enabled_linters
+      @enabled_linters ||= config.linters.select(&:enabled?)
     end
 
     def specified_source_files
@@ -235,7 +278,10 @@ module ALintRunner
 
     def cmds
       @cmds ||=
-        linters.map { |linter| linter.cmd_str(specified_source_files) }.compact
+        linters.reduce({}) { |acc, linter|
+          acc[linter.cli_option_name] = linter.cmd_str(specified_source_files)
+          acc
+        }
     end
 
     def run
@@ -250,7 +296,14 @@ module ALintRunner
       if list?
         puts output_source_files.join("\n")
       else
-        linters.each_with_index do |linter, index|
+        linters_to_run =
+          if any_specifically_enabled_linters?
+            specifically_enabled_linters
+          else
+            enabled_linters
+          end
+
+        linters_to_run.each_with_index do |linter, index|
           puts "\n\n" if index > 0
           puts "Running #{linter.name}"
 
@@ -393,7 +446,13 @@ module ALintRunner
   # ALintRunner
 
   def self.clirb
+    linters = config.linters
     @clirb ||= CLIRB.new do
+      linters.each do |linter|
+        option linter.cli_option_name, "specifically run or don't run #{linter.name}", {
+          abbrev: linter.cli_abbrev
+        }
+      end
       option "changed_only", "only run source files with changes", {
         abbrev: "c"
       }
