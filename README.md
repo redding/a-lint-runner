@@ -18,9 +18,12 @@ $ runlints -h
 Usage: runlints [options] [FILES]
 
 Options:
-    -c, --[no-]changed-only          only lint source files with changes
+    -u, --[no-]rubocop               specifically run or don't run Rubocop
+    -e, --[no-]es-lint               specifically run or don't run ES Lint
+    -s, --[no-]scss-lint             specifically run or don't run SCSS Lint
+    -c, --[no-]changed-only          only run source files with changes
     -r, --changed-ref VALUE          reference for changes, use with `-c` opt
-        --[no-]dry-run               output the linter command to $stdout
+        --[no-]dry-run               output each linter command to $stdout without executing
     -l, --[no-]list                  list source files on $stdout
     -d, --[no-]debug                 run in debug mode
         --version
@@ -35,22 +38,28 @@ Given these CONSTANT values:
 
 ```ruby
 BIN_NAME = "runlints"
+SOURCE_FILES = [
+  "app", "config", "db", "lib", "script", "test"
+]
+IGNORED_FILES = [
+  "test/fixtures"
+]
 LINTERS =
   [
     {
       name: "Rubocop",
-      executable: "rubocop"
-      extensions: ["rb"]
+      executable: "rubocop",
+      extensions: [".rb"]
     },
     {
       name: "ES Lint",
       executable: "./node_modules/.bin/eslint",
-      extensions: ["js"]
+      extensions: [".js"]
     },
     {
       name: "SCSS Lint",
       executable: "scss-lint",
-      extensions: ["scss"]
+      extensions: [".scss"]
     }
   ]
 ```
@@ -60,12 +69,17 @@ LINTERS =
 ```
 $ runlints -d
 [DEBUG] CLI init and parse...          (6.686 ms)
-[DEBUG] 3 source files:
-[DEBUG]   app/file1.rb
-[DEBUG]   app/file2.js
-[DEBUG]   app/file3.scss
-[DEBUG] Linter command:
-[DEBUG]   rubocop app/file1.rb; ./node_modules/.bin/eslint app/file2.js; scss-lint app/file3.scss
+[DEBUG] 0 specified source files:
+Running Rubocop
+[DEBUG]   rubocop .
+
+
+Running ES Lint
+[DEBUG]   ./node_modules/.bin/eslint .
+
+
+Running SCSS Lint
+[DEBUG]   scss-lint .
 ```
 
 This option, in addition to executing the linter command, outputs a bunch of detailed debug information.
@@ -77,10 +91,16 @@ $ runlints -d -c
 [DEBUG] CLI init and parse...            (7.138 ms)
 [DEBUG] Lookup changed source files...   (24.889 ms)
 [DEBUG]   `git diff --no-ext-diff --name-only  -- . && git ls-files --others --exclude-standard -- .`
-[DEBUG] 1 Source files:
+[DEBUG] 1 specified source files:
 [DEBUG]   app/file1.rb
-[DEBUG] Linter command:
+Running Rubocop
 [DEBUG]   rubocop app/file1.rb
+
+
+Running ES Lint
+
+
+Running SCSS Lint
 ```
 
 This runs a git command to determine which files have been updated (relative to `HEAD` by default) and only run the linters on those files.
@@ -92,21 +112,56 @@ $ runlints -d -c -r master
 [DEBUG] CLI init and parse...            (6.933 ms)
 [DEBUG] Lookup changed source files...   (162.297 ms)
 [DEBUG]   `git diff --no-ext-diff --name-only master -- . && git ls-files --others --exclude-standard -- .`
-[DEBUG] 2 Source files:
+[DEBUG] 2 specified source files:
 [DEBUG]   app/file2.js
 [DEBUG]   app/file3.scss
-[DEBUG] Linter command:
-[DEBUG]   ./node_modules/.bin/eslint app/file2.js; scss-lint app/file3.scss
+
+
+Running ES Lint
+[DEBUG]   ./node_modules/.bin/eslint app/file2.js
+
+
+Running SCSS Lint
+[DEBUG]   scss-lint app/file3.scss
 ```
 
 #### Dry-Run
 
 ```
 $ runlints --dry-run
-rubocop app/file1.rb; ./node_modules/.bin/eslint app/file2.js; scss-lint app/file3.scss
+Running Rubocop
+rubocop .
+
+
+Running ES Lint
+./node_modules/.bin/eslint .
+
+
+Running SCSS Lint
+scss-lint .
 ```
 
 This option only outputs the linter command it would have run. It does not execute the linter command.
+
+#### Specifically run or don't run individual linters
+
+```
+$ runlints --rubocop
+Running Rubocop
+rubocop .
+```
+
+```
+$ runlints --no-es-lint
+Running Rubocop
+rubocop .
+
+
+Running SCSS Lint
+scss-lint .
+```
+
+Each linter gets a CLI option that allows you to toggle it on/off. If no options are given, all linters are run.
 
 #### List
 
@@ -143,17 +198,18 @@ module ALintRunner
       {
         name: "Rubocop",
         executable: "rubocop"
-        extensions: ["rb"]
+        extensions: [".rb"]
+        cli_abbrev: "u"
       },
       {
         name: "ES Lint",
         executable: "./node_modules/.bin/eslint",
-        extensions: ["js"]
+        extensions: [".js"]
       },
       {
         name: "SCSS Lint",
         executable: "scss-lint",
-        extensions: ["scss"]
+        extensions: [".scss"]
       }
     ]
 
@@ -167,9 +223,12 @@ $ runlints -h
 Usage: runlints [options] [FILES]
 
 Options:
-    -c, --[no-]changed-only          only lint source files with changes
+    -u, --[no-]rubocop               specifically run or don't run Rubocop
+    -e, --[no-]es-lint               specifically run or don't run ES Lint
+    -s, --[no-]scss-lint             specifically run or don't run SCSS Lint
+    -c, --[no-]changed-only          only run source files with changes
     -r, --changed-ref VALUE          reference for changes, use with `-c` opt
-        --[no-]dry-run               output the linter command to $stdout
+        --[no-]dry-run               output each linter command to $stdout without executing
     -l, --[no-]list                  list source files on $stdout
     -d, --[no-]debug                 run in debug mode
         --version
