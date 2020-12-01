@@ -5,7 +5,7 @@ require "set"
 
 # https://github.com/redding/a-lint-runner.rb
 module ALintRunner
-  VERSION = "0.0.1"
+  VERSION = "1.0.0"
 
   # update these as needed for your lint setup
   BIN_NAME = "a-lint-runner"
