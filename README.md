@@ -1,3 +1,5 @@
+=== **This is archived and no longer maintained** in favor of https://github.com/redding/l.rb ===
+
 # a-lint-runner.rb
 
 This is a CLI that generates and executes ruby linter commands.  Copy/rename it into your $PATH and customize the CONSTANT values at the top of the script for your linter setup.
